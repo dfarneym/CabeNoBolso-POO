@@ -40,6 +40,21 @@ public class Planejamento {
          return new ArrayList<>(despesas);
     }
 
+    // Procura um participante cadastrado pelo código.
+    public Participante buscarParticipante(int codigo) {
+
+    for (Participante participante : participantes) {
+
+        if (participante.getCodigo() == codigo) {
+            return participante;
+        }
+    }
+
+    throw new IllegalArgumentException(
+        "Participante não encontrado para o código " + codigo
+    );
+}
+
     // Confere se todos os envolvidos pertencem ao planejamento.
     private void validarVinculos(List<Participante> envolvidos) {
 
@@ -124,4 +139,88 @@ public void removerDespesa(Despesa despesa) {
     despesas.remove(despesa);
 }
 
+// Confere se a pessoa consultada é um dos objetos cadastrados.
+private void validarParticipanteCadastrado(Participante participante) {
+
+    if (participante == null) {
+        throw new IllegalArgumentException(
+            "O participante deve ser informado."
+        );
+    }
+
+    for (Participante cadastrado : participantes) {
+        if (cadastrado == participante) {
+            return; // Encerra a validação quando encontra o objeto.
+        }
+    }
+
+    throw new IllegalArgumentException(
+        "O participante não pertence ao planejamento."
+    );
+}
+
+// Soma as contribuições da pessoa em todas as despesas.
+public BigDecimal calcularTotalParticipante(Participante participante) {
+
+    validarParticipanteCadastrado(participante);
+
+    BigDecimal total = new BigDecimal("0.00");
+
+    for (Despesa despesa : despesas) {
+        total = total.add(
+            despesa.calcularValorParticipante(participante)
+        );
+    }
+
+    return total;
+}
+
+// Soma o custo total de cada despesa cadastrada.
+public BigDecimal calcularTotalGeral() {
+
+    BigDecimal total = new BigDecimal("0.00");
+
+    for (Despesa despesa : despesas) {
+        total = total.add(despesa.calcularTotal());
+    }
+
+    return total;
+}
+
+// Considera dentro do orçamento quem gastar até o limite disponível.
+public boolean estaDentroDoOrcamento(Participante participante) {
+
+    BigDecimal total = calcularTotalParticipante(participante);
+
+    return total.compareTo(participante.getOrcamento()) <= 0;
+}
+
+// Retorna o excesso. Para gastos dentro do limite, retorna zero.
+public BigDecimal calcularExcedente(Participante participante) {
+
+    BigDecimal total = calcularTotalParticipante(participante);
+
+    BigDecimal excedente = total.subtract(
+        participante.getOrcamento()
+    );
+
+    if (excedente.compareTo(BigDecimal.ZERO) > 0) {
+        return excedente;
+    }
+
+    return new BigDecimal("0.00");
+}
+// Atualiza o orçamento após validar o novo valor.
+public void setOrcamento(BigDecimal orcamento) {
+
+    if (orcamento == null
+            || orcamento.compareTo(BigDecimal.ZERO) < 0) {
+
+        throw new IllegalArgumentException(
+            "O orçamento deve ser maior ou igual a zero."
+        );
+    }
+
+    this.orcamento = orcamento;
+}
 }
