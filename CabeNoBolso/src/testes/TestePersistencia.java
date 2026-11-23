@@ -45,5 +45,51 @@ public class TestePersistencia {
         System.out.println(
                 "TESTE APROVADO: planejamento salvo e carregado."
         );
+        // Teste de carregamento de arquivo inexistente.
+        ArquivoPersistencia arquivoInexistente =
+                new ArquivoPersistencia("arquivo-que-nao-existe.dat");
+
+        try {
+        arquivoInexistente.carregar();
+
+        throw new AssertionError(
+                "Era esperado um erro para arquivo inexistente."
+        );
+
+        } catch (IllegalStateException e) {
+
+        System.out.println(
+                "TESTE APROVADO: arquivo inexistente tratado."
+        );
+        }
+        // Testa o carregamento de um arquivo corrompido.
+        try {
+        java.nio.file.Files.writeString(
+                java.nio.file.Path.of("teste-corrompido.dat"),
+                "Conteudo invalido para serializacao"
+        );
+
+        ArquivoPersistencia arquivoCorrompido =
+                new ArquivoPersistencia("teste-corrompido.dat");
+
+        try {
+                arquivoCorrompido.carregar();
+
+                throw new AssertionError(
+                        "Era esperado um erro para arquivo corrompido."
+                );
+
+        } catch (java.io.UncheckedIOException e) {
+                System.out.println(
+                        "TESTE APROVADO: arquivo corrompido tratado."
+                );
+        }
+
+        } catch (java.io.IOException e) {
+        throw new AssertionError(
+                "Nao foi possivel preparar o arquivo de teste.", e
+        );
+      }
     }
+
 }
