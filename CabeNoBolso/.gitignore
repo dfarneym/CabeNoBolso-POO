@@ -13,3 +13,6 @@ target/
 # Arquivos do sistema operacional
 .DS_Store
 Thumbs.db
+
+# Dados gerados pelo teste de persistência
+/teste-planejamento.dat
