@@ -3,8 +3,10 @@ package model;
 import java.util.ArrayList;
 import java.util.List;
 import java.math.BigDecimal;
+import java.io.Serializable;
 
-public class Planejamento {
+public class Planejamento implements Serializable{
+    private static final long serialVersionUID = 1L;
     private final List<Participante> participantes;
     private final List<Despesa> despesas;
 
@@ -209,18 +211,5 @@ public BigDecimal calcularExcedente(Participante participante) {
     }
 
     return new BigDecimal("0.00");
-}
-// Atualiza o orçamento após validar o novo valor.
-public void setOrcamento(BigDecimal orcamento) {
-
-    if (orcamento == null
-            || orcamento.compareTo(BigDecimal.ZERO) < 0) {
-
-        throw new IllegalArgumentException(
-            "O orçamento deve ser maior ou igual a zero."
-        );
-    }
-
-    this.orcamento = orcamento;
 }
 }
