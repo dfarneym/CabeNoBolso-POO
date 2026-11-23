@@ -31,7 +31,6 @@ public class ArquivoPersistencia {
 
         this.arquivo = new File(caminhoArquivo);
     }
-    
     /**
      * Grava um objeto serializável no arquivo configurado.
      *
@@ -90,5 +89,4 @@ public class ArquivoPersistencia {
             );
         }
     }
-    
 }
