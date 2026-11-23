@@ -1,5 +1,7 @@
 package persistence;
 
+import model.Planejamento;
+
 /**
  * Define o contrato para salvar e recuperar
  * um planejamento de despesas.
@@ -9,7 +11,17 @@ package persistence;
  */
 public interface Persistencia {
 
-    // void salvar(Planejamento planejamento);
+    /**
+     * Salva o planejamento.
+     *
+     * @param planejamento planejamento que será armazenado
+     */
+    void salvar(Planejamento planejamento);
 
-    // Planejamento carregar();
+    /**
+     * Recupera um planejamento anteriormente salvo.
+     *
+     * @return planejamento recuperado
+     */
+    Planejamento carregar();
 }

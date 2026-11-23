@@ -11,6 +11,8 @@ import java.io.UncheckedIOException;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 
+import model.Planejamento;
+
 /**
  * Responsável por armazenar e recuperar
  * os dados do planejamento em arquivo.
@@ -18,7 +20,7 @@ import java.io.ObjectInputStream;
  * Implementará a interface Persistencia
  * por meio da serialização de objetos Java.
  */
-public class ArquivoPersistencia {
+public class ArquivoPersistencia implements Persistencia{
 
     private final File arquivo;
 
@@ -30,6 +32,36 @@ public class ArquivoPersistencia {
         }
 
         this.arquivo = new File(caminhoArquivo);
+    }
+    /**
+     * Salva o planejamento no arquivo configurado.
+     *
+     * @param planejamento planejamento que será salvo
+     */
+    @Override
+    public void salvar(Planejamento planejamento) {
+        gravarObjeto(planejamento);
+    }
+
+    /**
+     * Recupera o planejamento armazenado no arquivo.
+     *
+     * @return planejamento recuperado
+     * @throws IllegalStateException se o arquivo não contiver
+     *         um objeto do tipo Planejamento
+     */
+    @Override
+    public Planejamento carregar() {
+
+        Object objeto = lerObjeto();
+
+        if (!(objeto instanceof Planejamento)) {
+            throw new IllegalStateException(
+                "O arquivo não contém um planejamento válido."
+            );
+        }
+
+        return (Planejamento) objeto;
     }
     /**
      * Grava um objeto serializável no arquivo configurado.
