@@ -90,4 +90,27 @@ public class Participante implements Serializable {
     public BigDecimal getOrcamento() {
         return orcamento;
     }
+
+    public static long getSerialversionuid() {
+        return serialVersionUID;
+    }
+
+//Altera o nome se o novo valor for válido.
+
+    public void setNome(String nome) {
+        if (nome == null || nome. isBlank()) {
+            throw new IllegalArgumentException("Nome inválido");
+        }
+        this.nome = nome;
+    }
+
+//Altera o orçamento somente se ele não for nulo nem negativo.
+    public void setOrcamento(BigDecimal orcamento) {
+        if (orcamento == null || orcamento.signum() < 0) {
+            throw new IllegalArgumentException("Orçamento inválido");
+        }
+        this.orcamento = orcamento;
+    }
+
+    
 }

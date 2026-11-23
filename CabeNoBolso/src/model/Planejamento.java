@@ -212,4 +212,46 @@ public BigDecimal calcularExcedente(Participante participante) {
 
     return new BigDecimal("0.00");
 }
+
+// Remove um participante pelo código, caso não tenha despesas vinculadas.
+public void removerParticipante(int codigo) {
+
+    // Localiza o objeto cadastrado.
+    // Se não encontrar, buscarParticipante() lança uma exceção.
+    Participante participante = buscarParticipante(codigo);
+
+    // Confere todas as despesas antes de remover.
+    for (Despesa despesa : despesas) {
+
+        if (despesa.participa(participante)) {
+            throw new IllegalArgumentException(
+                "Não é possível remover um participante vinculado a despesas."
+            );
+        }
+    }
+
+    // Remove somente após confirmar que não existem vínculos.
+    participantes.remove(participante);
+}
+
+// Atualiza o nome e o orçamento, mantendo o código e os vínculos.
+public void atualizarParticipante(
+        int codigo, String nome, BigDecimal orcamento) {
+
+    // Obtém o próprio objeto cadastrado no planejamento.
+    Participante participante = buscarParticipante(codigo);
+
+    // Valida todos os novos dados antes de modificar o objeto.
+    if (nome == null || nome.isBlank()) {
+        throw new IllegalArgumentException("Nome inválido.");
+    }
+
+    if (orcamento == null || orcamento.signum() < 0) {
+        throw new IllegalArgumentException("Orçamento inválido.");
+    }
+
+    // Aplica as alterações no mesmo objeto utilizado pelas despesas.
+    participante.setNome(nome);
+    participante.setOrcamento(orcamento);
+}
 }
