@@ -90,6 +90,35 @@ public class TestePersistencia {
                 "Nao foi possivel preparar o arquivo de teste.", e
         );
       }
+      // Verifica se uma tentativa inválida de salvar preserva os dados.
+        ArquivoPersistencia persistenciaSegura =
+                new ArquivoPersistencia("teste-planejamento.dat");
+
+        // O arquivo já contém o planejamento válido salvo no primeiro teste.
+        try {
+        persistenciaSegura.salvar(null);
+
+        throw new AssertionError(
+                "Era esperado um erro ao tentar salvar null."
+        );
+
+        } catch (IllegalArgumentException e) {
+
+        Planejamento preservado = persistenciaSegura.carregar();
+
+        if (preservado.getParticipantes().size() != 1
+                || !preservado.getParticipantes().get(0)
+                        .getNome().equals("Ana")) {
+
+                throw new AssertionError(
+                "O planejamento anterior não foi preservado."
+                );
+        }
+
+        System.out.println(
+                "TESTE APROVADO: arquivo anterior preservado."
+        );
+      }
     }
 
 }
