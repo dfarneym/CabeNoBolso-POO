@@ -17,3 +17,4 @@ Thumbs.db
 # Dados gerados pelo teste de persistência
 /teste-planejamento.dat
 /teste-corrompido.dat
+/teste-integracao.dat
