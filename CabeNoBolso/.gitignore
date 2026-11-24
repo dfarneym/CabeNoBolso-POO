@@ -14,7 +14,8 @@ target/
 .DS_Store
 Thumbs.db
 
-# Dados gerados pelo teste de persistência
+# Arquivos de dados gerados pelos testes
+/teste-controller.dat
 /teste-planejamento.dat
 /teste-corrompido.dat
 /teste-integracao.dat
