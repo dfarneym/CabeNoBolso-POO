@@ -87,7 +87,19 @@ public class Participante implements Serializable {
      *
      * @return orçamento do participante
      */
-    public BigDecimal getOrcamento() {
+  public BigDecimal getOrcamento() {
         return orcamento;
     }
-}
+public void setNome(String nome) {
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("Nome inválido");
+        }
+        this.nome = nome;
+    }
+  public void setOrcamento(BigDecimal orcamento) {
+        if (orcamento == null || orcamento.signum() < 0) {
+            throw new IllegalArgumentException("Orçamento inválido.");
+        }
+        this.orcamento = orcamento;
+    }
+}     
