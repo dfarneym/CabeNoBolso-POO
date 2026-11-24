@@ -13,6 +13,11 @@ import java.io.ObjectInputStream;
 
 import model.Planejamento;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.AtomicMoveNotSupportedException;
+
 /**
  * Responsável por armazenar e recuperar
  * os dados do planejamento em arquivo.
@@ -64,31 +69,72 @@ public class ArquivoPersistencia implements Persistencia{
         return (Planejamento) objeto;
     }
     /**
-     * Grava um objeto serializável no arquivo configurado.
-     *
-     * @param objeto objeto que será armazenado
-     * @throws IllegalArgumentException se o objeto for nulo
-     * @throws UncheckedIOException se ocorrer uma falha na gravação
-     */
-    private void gravarObjeto(Serializable objeto) {
+ * Grava um objeto serializável utilizando um arquivo temporário.
+ *
+ * O arquivo anterior só é substituído após a gravação
+ * completa do novo objeto.
+ *
+ * @param objeto objeto que será armazenado
+ * @throws IllegalArgumentException se o objeto for nulo
+ * @throws UncheckedIOException se ocorrer uma falha na gravação
+ */
+private void gravarObjeto(Serializable objeto) {
 
-        if (objeto == null) {
-            throw new IllegalArgumentException(
-                "O objeto não pode ser nulo."
-            );
-        }
+    if (objeto == null) {
+        throw new IllegalArgumentException(
+            "O objeto não pode ser nulo."
+        );
+    }
 
+    Path destino = arquivo.toPath().toAbsolutePath();
+    Path temporario = null;
+
+    try {
+        // Cria o temporário na mesma pasta do arquivo definitivo.
+        temporario = Files.createTempFile(
+            destino.getParent(),
+            "planejamento-",
+            ".tmp"
+        );
+
+        // Primeiro grava o objeto no arquivo temporário.
         try (ObjectOutputStream saida = new ObjectOutputStream(
-                new FileOutputStream(arquivo))) {
+                new FileOutputStream(temporario.toFile()))) {
 
             saida.writeObject(objeto);
+        }
 
-        } catch (IOException e) {
-            throw new UncheckedIOException(
-                "Erro ao salvar o arquivo.", e
-            );
+        // Substitui o arquivo original somente após gravar tudo.
+        Files.move(
+            temporario,
+            destino,
+            StandardCopyOption.ATOMIC_MOVE,
+            StandardCopyOption.REPLACE_EXISTING
+        );
+
+    } catch (AtomicMoveNotSupportedException e) {
+        throw new UncheckedIOException(
+            "O sistema de arquivos não oferece substituição atômica.",
+            e
+        );
+
+    } catch (IOException e) {
+        throw new UncheckedIOException(
+            "Erro ao salvar o planejamento.",
+            e
+        );
+
+    } finally {
+        // Remove o temporário caso alguma etapa tenha falhado.
+        if (temporario != null) {
+            try {
+                Files.deleteIfExists(temporario);
+            } catch (IOException e) {
+                // Não substitui a exceção original, se houver.
+            }
         }
     }
+}
     /**
      * Recupera um objeto anteriormente salvo no arquivo.
      *
