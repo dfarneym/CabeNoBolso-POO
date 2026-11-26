@@ -1,15 +1,26 @@
 
 package view;
 
+import controller.PlanejamentoController;
 import model.Participante;
+import model.Despesa;
+import model.DespesaFixa;
+import model.DespesaPorPessoa;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 public class TelaPrincipal extends JFrame {
+
+    // ===== CONTROLLER =====
+
+    private final PlanejamentoController controller;
 
     // ===== PARTICIPANTES =====
 
@@ -29,7 +40,6 @@ public class TelaPrincipal extends JFrame {
     private JTextField campoValor;
     private JComboBox<String> campoTipo;
 
-    // Agora trabalhamos com objetos Participante
     private JList<Participante> listaParticipantes;
     private DefaultListModel<Participante> modeloListaParticipantes;
 
@@ -43,24 +53,30 @@ public class TelaPrincipal extends JFrame {
     // ===== RESUMO =====
 
     private JLabel textoTotalGeral;
-
     private JTable tabelaResumo;
     private DefaultTableModel modeloResumo;
 
-    // ===== SALVAR E CARREGAR =====
+    // ===== ARQUIVOS =====
 
     private JButton botaoSalvar;
     private JButton botaoCarregar;
 
     // ===== CONSTRUTOR =====
 
-    public TelaPrincipal() {
+    public TelaPrincipal(PlanejamentoController controller) {
+
+        if (controller == null) {
+            throw new IllegalArgumentException(
+                    "Controller não pode ser nulo."
+            );
+        }
+
+        this.controller = controller;
 
         setTitle("Cabe no Bolso");
         setSize(800, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-
         setLayout(new BorderLayout(10, 10));
 
         JTabbedPane abas = new JTabbedPane();
@@ -82,16 +98,24 @@ public class TelaPrincipal extends JFrame {
 
         add(abas, BorderLayout.CENTER);
 
-        // Botões principais
+        // Botões sempre visíveis
         botaoSalvar = new JButton("Salvar planejamento");
         botaoCarregar = new JButton("Carregar planejamento");
 
-        JPanel painelBotoesPrincipais = new JPanel();
+        JPanel painelArquivos = new JPanel();
 
-        painelBotoesPrincipais.add(botaoSalvar);
-        painelBotoesPrincipais.add(botaoCarregar);
+        painelArquivos.add(botaoSalvar);
+        painelArquivos.add(botaoCarregar);
 
-        add(painelBotoesPrincipais, BorderLayout.SOUTH);
+        add(painelArquivos, BorderLayout.SOUTH);
+
+        // Conecta todos os eventos
+        conectarAcoesParticipantes();
+        conectarAcoesDespesas();
+        conectarAcoesArquivos();
+
+        // Atualiza os dados ao abrir a janela
+        atualizarTudoNaTela();
     }
 
     // ===== ABA PARTICIPANTES =====
@@ -119,7 +143,6 @@ public class TelaPrincipal extends JFrame {
         formulario.add(new JLabel("Orçamento (R$):"));
         formulario.add(campoOrcamento);
 
-        // Botões
         botaoCadastrar = new JButton("Cadastrar");
         botaoAlterar = new JButton("Alterar");
 
@@ -128,7 +151,6 @@ public class TelaPrincipal extends JFrame {
         painelBotoes.add(botaoCadastrar);
         painelBotoes.add(botaoAlterar);
 
-        // Tabela
         String[] colunas = {
                 "Código",
                 "Nome",
@@ -136,7 +158,6 @@ public class TelaPrincipal extends JFrame {
         };
 
         modeloParticipantes = criarModeloTabela(colunas);
-
         tabelaParticipantes = new JTable(modeloParticipantes);
 
         tabelaParticipantes.setSelectionMode(
@@ -161,7 +182,6 @@ public class TelaPrincipal extends JFrame {
                 new BorderLayout(10, 10)
         );
 
-        // Formulário
         JPanel formulario = new JPanel(
                 new GridLayout(3, 2, 10, 10)
         );
@@ -194,7 +214,6 @@ public class TelaPrincipal extends JFrame {
                 ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
         );
 
-        // Mostra código e nome sem alterar o objeto
         listaParticipantes.setCellRenderer(
                 new DefaultListCellRenderer() {
 
@@ -259,7 +278,6 @@ public class TelaPrincipal extends JFrame {
         };
 
         modeloDespesas = criarModeloTabela(colunasDespesas);
-
         tabelaDespesas = new JTable(modeloDespesas);
 
         tabelaDespesas.setSelectionMode(
@@ -276,7 +294,8 @@ public class TelaPrincipal extends JFrame {
         painelCentral.add(painelSelecao);
         painelCentral.add(rolagemDespesas);
 
-        // Botões
+        // ===== BOTÕES DE DESPESAS =====
+
         botaoAdicionarDespesa = new JButton("Adicionar");
         botaoEditarDespesa = new JButton("Editar");
         botaoExcluirDespesa = new JButton("Excluir");
@@ -325,7 +344,6 @@ public class TelaPrincipal extends JFrame {
         };
 
         modeloResumo = criarModeloTabela(colunasResumo);
-
         tabelaResumo = new JTable(modeloResumo);
 
         JScrollPane rolagem =
@@ -337,7 +355,7 @@ public class TelaPrincipal extends JFrame {
         return painel;
     }
 
-    // ===== MODELO DE TABELA =====
+    // ===== MÉTODOS AUXILIARES =====
 
     private DefaultTableModel criarModeloTabela(
             String[] colunas) {
@@ -352,6 +370,23 @@ public class TelaPrincipal extends JFrame {
                 return false;
             }
         };
+    }
+
+    private String formatarMoeda(BigDecimal valor) {
+
+        NumberFormat formato =
+                NumberFormat.getCurrencyInstance(
+                        Locale.of("pt", "BR")
+                );
+
+        return formato.format(valor);
+    }
+
+    private BigDecimal converterValor(String texto) {
+
+        String valor = texto.trim().replace(",", ".");
+
+        return new BigDecimal(valor);
     }
 
     // ===== CONSULTAR CAMPOS =====
@@ -380,9 +415,7 @@ public class TelaPrincipal extends JFrame {
         return (String) campoTipo.getSelectedItem();
     }
 
-    // NOVO: retorna os objetos Participante
     public List<Participante> getParticipantesSelecionados() {
-
         return listaParticipantes.getSelectedValuesList();
     }
 
@@ -396,9 +429,7 @@ public class TelaPrincipal extends JFrame {
             return -1;
         }
 
-        return tabelaParticipantes.convertRowIndexToModel(
-                linha
-        );
+        return tabelaParticipantes.convertRowIndexToModel(linha);
     }
 
     public int getLinhaDespesaSelecionada() {
@@ -409,9 +440,7 @@ public class TelaPrincipal extends JFrame {
             return -1;
         }
 
-        return tabelaDespesas.convertRowIndexToModel(
-                linha
-        );
+        return tabelaDespesas.convertRowIndexToModel(linha);
     }
 
     // ===== PREENCHER CAMPOS =====
@@ -443,20 +472,24 @@ public class TelaPrincipal extends JFrame {
         campoCodigo.setText("");
         campoNome.setText("");
         campoOrcamento.setText("");
+
+        tabelaParticipantes.clearSelection();
     }
 
     public void limparCamposDespesa() {
 
+        tabelaDespesas.clearSelection();
+
         campoDescricao.setText("");
         campoValor.setText("");
         campoTipo.setSelectedIndex(0);
+        campoTipo.setEnabled(true);
 
         listaParticipantes.clearSelection();
     }
 
-    // ===== ATUALIZAR LISTA DE PARTICIPANTES =====
+    // ===== LISTA DE PARTICIPANTES =====
 
-    // Recebe os objetos originais do planejamento
     public void atualizarListaParticipantes(
             List<Participante> participantes) {
 
@@ -464,13 +497,10 @@ public class TelaPrincipal extends JFrame {
 
         for (Participante participante : participantes) {
 
-            modeloListaParticipantes.addElement(
-                    participante
-            );
+            modeloListaParticipantes.addElement(participante);
         }
     }
 
-    // Seleciona na lista as pessoas de uma despesa
     public void selecionarParticipantes(
             List<Participante> participantes) {
 
@@ -487,10 +517,7 @@ public class TelaPrincipal extends JFrame {
 
                 if (atual == participante) {
 
-                    listaParticipantes.addSelectionInterval(
-                            i, i
-                    );
-
+                    listaParticipantes.addSelectionInterval(i, i);
                     break;
                 }
             }
@@ -509,11 +536,7 @@ public class TelaPrincipal extends JFrame {
             Object orcamento) {
 
         modeloParticipantes.addRow(
-                new Object[]{
-                        codigo,
-                        nome,
-                        orcamento
-                }
+                new Object[]{codigo, nome, orcamento}
         );
     }
 
@@ -595,10 +618,7 @@ public class TelaPrincipal extends JFrame {
 
     public void mostrarMensagem(String mensagem) {
 
-        JOptionPane.showMessageDialog(
-                this,
-                mensagem
-        );
+        JOptionPane.showMessageDialog(this, mensagem);
     }
 
     public void mostrarErro(String mensagem) {
@@ -611,18 +631,604 @@ public class TelaPrincipal extends JFrame {
         );
     }
 
-    // ===== INICIAR O PROGRAMA =====
+    // ===== EVENTOS DE PARTICIPANTES =====
 
-    public static void main(String[] args) {
+    private void conectarAcoesParticipantes() {
 
-        SwingUtilities.invokeLater(() -> {
+        aoCadastrar(evento -> cadastrarParticipante());
 
-            TelaPrincipal janela = new TelaPrincipal();
-            janela.setVisible(true);
+        aoAlterar(evento -> alterarParticipante());
 
-        });
+        tabelaParticipantes.getSelectionModel()
+                .addListSelectionListener(evento -> {
+
+                    if (!evento.getValueIsAdjusting()) {
+                        preencherParticipanteSelecionado();
+                    }
+                });
+    }
+
+    // ===== CADASTRAR PARTICIPANTE =====
+
+    private void cadastrarParticipante() {
+
+        try {
+
+            int codigo = Integer.parseInt(
+                    getCodigoDigitado()
+            );
+
+            String nome = getNomeDigitado();
+
+            BigDecimal orcamento = converterValor(
+                    getOrcamentoDigitado()
+            );
+
+            controller.cadastrarParticipante(
+                    codigo,
+                    nome,
+                    orcamento
+            );
+
+            atualizarParticipantesNaTela();
+            atualizarResumoNaTela();
+            limparCamposParticipante();
+
+            mostrarMensagem(
+                    "Participante cadastrado com sucesso!"
+            );
+
+        } catch (IllegalArgumentException erro) {
+
+            mostrarErro(
+                    "Não foi possível cadastrar: "
+                            + erro.getMessage()
+            );
+        }
+    }
+
+    // ===== ALTERAR PARTICIPANTE =====
+
+    private void alterarParticipante() {
+
+        try {
+
+            int linha = getLinhaParticipanteSelecionada();
+
+            if (linha == -1) {
+
+                mostrarErro(
+                        "Selecione um participante na tabela."
+                );
+
+                return;
+            }
+
+            int codigo = Integer.parseInt(
+                    modeloParticipantes.getValueAt(
+                            linha, 0
+                    ).toString()
+            );
+
+            String nome = getNomeDigitado();
+
+            BigDecimal orcamento = converterValor(
+                    getOrcamentoDigitado()
+            );
+
+            controller.atualizarParticipante(
+                    codigo,
+                    nome,
+                    orcamento
+            );
+
+            atualizarParticipantesNaTela();
+            atualizarResumoNaTela();
+            limparCamposParticipante();
+
+            mostrarMensagem(
+                    "Participante atualizado com sucesso!"
+            );
+
+        } catch (IllegalArgumentException erro) {
+
+            mostrarErro(
+                    "Não foi possível alterar: "
+                            + erro.getMessage()
+            );
+        }
+    }
+
+    // ===== PREENCHER PARTICIPANTE SELECIONADO =====
+
+    private void preencherParticipanteSelecionado() {
+
+        int linha = getLinhaParticipanteSelecionada();
+
+        if (linha == -1) {
+            return;
+        }
+
+        int codigo = Integer.parseInt(
+                modeloParticipantes.getValueAt(
+                        linha, 0
+                ).toString()
+        );
+
+        for (Participante participante :
+                controller.listarParticipantes()) {
+
+            if (participante.getCodigo() == codigo) {
+
+                preencherCamposParticipante(
+                        String.valueOf(participante.getCodigo()),
+                        participante.getNome(),
+                        participante.getOrcamento().toPlainString()
+                );
+
+                return;
+            }
+        }
+    }
+
+    // ===== ATUALIZAR PARTICIPANTES =====
+
+    public void atualizarParticipantesNaTela() {
+
+        List<Participante> participantes =
+                controller.listarParticipantes();
+
+        limparTabelaParticipantes();
+
+        for (Participante participante : participantes) {
+
+            adicionarLinhaParticipante(
+                    participante.getCodigo(),
+                    participante.getNome(),
+                    formatarMoeda(participante.getOrcamento())
+            );
+        }
+
+        atualizarListaParticipantes(participantes);
+    }
+
+    // ===== EVENTOS DE DESPESAS =====
+
+    private void conectarAcoesDespesas() {
+
+        aoAdicionarDespesa(evento -> adicionarDespesa());
+        aoEditarDespesa(evento -> editarDespesa());
+        aoExcluirDespesa(evento -> excluirDespesa());
+
+        tabelaDespesas.getSelectionModel()
+                .addListSelectionListener(evento -> {
+
+                    if (!evento.getValueIsAdjusting()) {
+                        preencherDespesaSelecionada();
+                    }
+                });
+    }
+
+    // ===== ADICIONAR DESPESA =====
+
+    private void adicionarDespesa() {
+
+        try {
+
+            if (getLinhaDespesaSelecionada() != -1) {
+
+                mostrarErro(
+                        "Finalize a edição ou desmarque a "
+                                + "despesa antes de adicionar outra."
+                );
+
+                return;
+            }
+
+            String descricao = getDescricaoDigitada();
+
+            BigDecimal valor = converterValor(
+                    getValorDigitado()
+            );
+
+            List<Participante> participantes =
+                    getParticipantesSelecionados();
+
+            if (participantes.isEmpty()) {
+
+                mostrarErro(
+                        "Selecione pelo menos um participante."
+                );
+
+                return;
+            }
+
+            Despesa despesa;
+
+            if ("Fixa".equals(getTipoSelecionado())) {
+
+                despesa = new DespesaFixa(
+                        descricao,
+                        valor,
+                        participantes
+                );
+
+            } else {
+
+                despesa = new DespesaPorPessoa(
+                        descricao,
+                        valor,
+                        participantes
+                );
+            }
+
+            controller.adicionarDespesa(despesa);
+
+            atualizarDespesasNaTela();
+            atualizarResumoNaTela();
+            limparCamposDespesa();
+
+            mostrarMensagem(
+                    "Despesa adicionada com sucesso!"
+            );
+
+        } catch (IllegalArgumentException erro) {
+
+            mostrarErro(
+                    "Não foi possível adicionar a despesa: "
+                            + erro.getMessage()
+            );
+        }
+    }
+
+    // ===== EDITAR DESPESA =====
+
+    private void editarDespesa() {
+
+        try {
+
+            int linha = getLinhaDespesaSelecionada();
+
+            if (linha == -1) {
+
+                mostrarErro(
+                        "Selecione uma despesa na tabela "
+                                + "para editar."
+                );
+
+                return;
+            }
+
+            List<Despesa> despesas =
+                    controller.listarDespesas();
+
+            Despesa despesa = despesas.get(linha);
+
+            String descricao = getDescricaoDigitada();
+
+            BigDecimal valor = converterValor(
+                    getValorDigitado()
+            );
+
+            List<Participante> participantes =
+                    getParticipantesSelecionados();
+
+            if (participantes.isEmpty()) {
+
+                mostrarErro(
+                        "Selecione pelo menos um participante."
+                );
+
+                return;
+            }
+
+            controller.atualizarDespesa(
+                    despesa,
+                    descricao,
+                    valor,
+                    participantes
+            );
+
+            atualizarDespesasNaTela();
+            atualizarResumoNaTela();
+            limparCamposDespesa();
+
+            mostrarMensagem(
+                    "Despesa atualizada com sucesso!"
+            );
+
+        } catch (IllegalArgumentException erro) {
+
+            mostrarErro(
+                    "Não foi possível editar a despesa: "
+                            + erro.getMessage()
+            );
+
+        } catch (IndexOutOfBoundsException erro) {
+
+            mostrarErro(
+                    "A despesa selecionada não foi encontrada."
+            );
+        }
+    }
+
+    // ===== EXCLUIR DESPESA =====
+
+    private void excluirDespesa() {
+
+        try {
+
+            int linha = getLinhaDespesaSelecionada();
+
+            if (linha == -1) {
+
+                mostrarErro(
+                        "Selecione uma despesa na tabela "
+                                + "para excluir."
+                );
+
+                return;
+            }
+
+            List<Despesa> despesas =
+                    controller.listarDespesas();
+
+            Despesa despesa = despesas.get(linha);
+
+            int resposta = JOptionPane.showConfirmDialog(
+                    this,
+                    "Deseja realmente excluir a despesa "
+                            + despesa.getDescricao() + "?",
+                    "Confirmar exclusão",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (resposta != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+            controller.removerDespesa(despesa);
+
+            atualizarDespesasNaTela();
+            atualizarResumoNaTela();
+            limparCamposDespesa();
+
+            mostrarMensagem(
+                    "Despesa excluída com sucesso!"
+            );
+
+        } catch (IllegalArgumentException erro) {
+
+            mostrarErro(
+                    "Não foi possível excluir a despesa: "
+                            + erro.getMessage()
+            );
+
+        } catch (IndexOutOfBoundsException erro) {
+
+            mostrarErro(
+                    "A despesa selecionada não foi encontrada."
+            );
+        }
+    }
+
+    // ===== PREENCHER DESPESA SELECIONADA =====
+
+    private void preencherDespesaSelecionada() {
+
+        int linha = getLinhaDespesaSelecionada();
+
+        if (linha == -1) {
+
+            campoTipo.setEnabled(true);
+            return;
+        }
+
+        List<Despesa> despesas =
+                controller.listarDespesas();
+
+        if (linha >= despesas.size()) {
+            return;
+        }
+
+        Despesa despesa = despesas.get(linha);
+
+        String tipo;
+
+        if (despesa instanceof DespesaFixa) {
+            tipo = "Fixa";
+        } else {
+            tipo = "Por pessoa";
+        }
+
+        preencherCamposDespesa(
+                despesa.getDescricao(),
+                despesa.getValor().toPlainString(),
+                tipo
+        );
+
+        campoTipo.setEnabled(false);
+
+        selecionarParticipantes(
+                despesa.getParticipantes()
+        );
+    }
+
+    // ===== ATUALIZAR DESPESAS =====
+
+    public void atualizarDespesasNaTela() {
+
+        List<Despesa> despesas =
+                controller.listarDespesas();
+
+        limparTabelaDespesas();
+
+        for (Despesa despesa : despesas) {
+
+            String tipo;
+
+            if (despesa instanceof DespesaFixa) {
+                tipo = "Fixa";
+            } else {
+                tipo = "Por pessoa";
+            }
+
+            StringBuilder nomes = new StringBuilder();
+
+            for (Participante participante :
+                    despesa.getParticipantes()) {
+
+                if (nomes.length() > 0) {
+                    nomes.append(", ");
+                }
+
+                nomes.append(participante.getNome());
+            }
+
+            adicionarLinhaDespesa(
+                    despesa.getDescricao(),
+                    tipo,
+                    formatarMoeda(despesa.getValor()),
+                    nomes.toString()
+            );
+        }
+    }
+
+    // ===== ATUALIZAR RESUMO =====
+
+    public void atualizarResumoNaTela() {
+
+        BigDecimal totalGeral =
+                controller.calcularTotalGeral();
+
+        atualizarTotalGeral(
+                formatarMoeda(totalGeral)
+        );
+
+        limparTabelaResumo();
+
+        List<Participante> participantes =
+                controller.listarParticipantes();
+
+        for (Participante participante : participantes) {
+
+            BigDecimal totalParticipante =
+                    controller.calcularTotalParticipante(
+                            participante
+                    );
+
+            BigDecimal orcamento =
+                    participante.getOrcamento();
+
+            String situacao;
+
+            if (controller.estaDentroDoOrcamento(
+                    participante)) {
+
+                situacao = "Dentro do orçamento";
+
+            } else {
+
+                BigDecimal excedente =
+                        controller.calcularExcedente(
+                                participante
+                        );
+
+                situacao = "Excedeu "
+                        + formatarMoeda(excedente);
+            }
+
+            adicionarLinhaResumo(
+                    participante.getNome(),
+                    formatarMoeda(totalParticipante),
+                    formatarMoeda(orcamento),
+                    situacao
+            );
+        }
+    }
+
+    // ===== NOVO: ATUALIZAR TODAS AS ABAS =====
+
+    public void atualizarTudoNaTela() {
+
+        atualizarParticipantesNaTela();
+        atualizarDespesasNaTela();
+        atualizarResumoNaTela();
+    }
+
+    // ===== NOVO: EVENTOS DE ARQUIVOS =====
+
+    private void conectarAcoesArquivos() {
+
+        aoSalvar(evento -> salvarPlanejamento());
+
+        aoCarregar(evento -> carregarPlanejamento());
+    }
+
+    // ===== NOVO: SALVAR PLANEJAMENTO =====
+
+    private void salvarPlanejamento() {
+
+        try {
+
+            // O Controller utiliza a persistência
+            // configurada pela classe Main.
+            controller.salvarPlanejamento();
+
+            mostrarMensagem(
+                    "Planejamento salvo com sucesso!"
+            );
+
+        } catch (RuntimeException erro) {
+
+            mostrarErro(
+                    "Não foi possível salvar o planejamento: "
+                            + erro.getMessage()
+            );
+        }
+    }
+
+    // ===== NOVO: CARREGAR PLANEJAMENTO =====
+
+    private void carregarPlanejamento() {
+
+        // Aviso para evitar perder alterações não salvas
+        int resposta = JOptionPane.showConfirmDialog(
+                this,
+                "Carregar um planejamento salvo substituirá "
+                        + "os dados atuais.\nDeseja continuar?",
+                "Confirmar carregamento",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        if (resposta != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+
+            // Recupera os dados salvos pelo Controller
+            controller.carregarPlanejamento();
+
+            // Limpa os formulários da tela
+            limparCamposParticipante();
+            limparCamposDespesa();
+
+            // Exibe os dados que acabaram de ser carregados
+            atualizarTudoNaTela();
+
+            mostrarMensagem(
+                    "Planejamento carregado com sucesso!"
+            );
+
+        } catch (RuntimeException erro) {
+
+            mostrarErro(
+                    "Não foi possível carregar o planejamento: "
+                            + erro.getMessage()
+            );
+        }
     }
 }
-
-
-
