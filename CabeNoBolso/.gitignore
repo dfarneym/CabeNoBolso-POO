@@ -19,3 +19,6 @@ Thumbs.db
 /teste-planejamento.dat
 /teste-corrompido.dat
 /teste-integracao.dat
+
+# Dados salvos pela aplicação
+/planejamento.dat
