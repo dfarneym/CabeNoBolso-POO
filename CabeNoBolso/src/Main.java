@@ -1,21 +1,26 @@
 import controller.PlanejamentoController;
 import model.Planejamento;
 import persistence.ArquivoPersistencia;
+import view.TelaPrincipal;
+
+import javax.swing.SwingUtilities;
 
 public class Main {
 
     public static void main(String[] args) {
 
-        Planejamento planejamento = new Planejamento();
+        SwingUtilities.invokeLater(() -> {
 
-        ArquivoPersistencia persistencia =
-                new ArquivoPersistencia("planejamento.dat");
+            Planejamento planejamento = new Planejamento();
 
-        PlanejamentoController controller =
-                new PlanejamentoController(
-                        planejamento, persistencia);
+            ArquivoPersistencia persistencia =
+                    new ArquivoPersistencia("planejamento.dat");
 
-        System.out.println(
-                "Cabe no Bolso: aplicação inicializada.");
+            PlanejamentoController controller =
+                    new PlanejamentoController(planejamento, persistencia);
+
+            TelaPrincipal tela = new TelaPrincipal(controller);
+            tela.setVisible(true);
+        });
     }
 }
