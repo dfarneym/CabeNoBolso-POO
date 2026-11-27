@@ -72,6 +72,26 @@ java -cp bin testes.TesteValidacaoDespesas
 
 Os testes verificam os cálculos, as validações, as operações do Controller e o salvamento e carregamento dos dados.
 
+Os testes automatizados foram executados após a integração dos módulos, sem apresentar falhas. Foram verificados os cadastros, as alterações, os cálculos das despesas, o tratamento de dados inválidos e a recuperação do planejamento.
+
+Também realizamos testes pela interface gráfica, confirmando o funcionamento das abas Participantes, Despesas e Resumo.
+
+## Exemplo de funcionamento
+
+Para verificar os cálculos, utilizamos o caso de referência da atividade, com três participantes e quatro despesas compartilhadas: transporte, almoço, atividade recreativa e sobremesa.
+
+Os resultados obtidos foram:
+
+| Participante | Orçamento | Gasto | Situação |
+|---|---:|---:|---|
+| Ana | R$ 70,00 | R$ 75,00 | Excedeu R$ 5,00 |
+| Bruno | R$ 60,00 | R$ 60,00 | Dentro do orçamento |
+| Carla | R$ 70,00 | R$ 75,00 | Excedeu R$ 5,00 |
+
+**Total geral: R$ 210,00.**
+
+Os mesmos resultados foram confirmados após salvar e carregar o planejamento.
+
 ## Salvamento dos dados
 
 A aplicação permite salvar o planejamento pelo botão **Salvar planejamento** e recuperá-lo pelo botão **Carregar planejamento**.
@@ -86,11 +106,14 @@ O arquivo utilizado é `planejamento.dat`, criado na pasta de execução do prog
 - `src/persistence/`: salvamento e carregamento.
 - `src/testes/`: testes das funcionalidades.
 - `src/Main.java`: inicialização da aplicação.
-- `docs/uml/`: arquivos do diagrama de classes.
+- `docs/uml/UML-CabenoBolso.mdj`: arquivo editável do diagrama de classes, desenvolvido no StarUML.
+- `docs/uml/Main.svg`: versão exportada do diagrama UML, utilizada na documentação.
 
 ## Equipe
 
-Desenvolvimento realizado por Daniel, Marcos, Yasmin e Sara, com divisão de atividades entre modelagem, regras de negócio, interface gráfica, persistência, integração,testes e documentação.
+O desenvolvimento do Cabe no Bolso foi realizado por Daniel, Marcos e Yasmin, com responsabilidades distribuídas entre modelagem UML, regras de negócio, interface gráfica, persistência, integração e testes. Sara participou das reuniões de acompanhamento e alinhamento da equipe e documentação.
+
+O projeto foi organizado com apoio do Trello, GitHub, Google Meet e WhatsApp.
 
 ## Repositório
 
